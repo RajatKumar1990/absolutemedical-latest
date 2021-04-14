@@ -1,0 +1,484 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule xmlns:salesforce-composite="http://www.mulesoft.org/schema/mule/salesforce-composite" xmlns:secure-properties="http://www.mulesoft.org/schema/mule/secure-properties"
+	xmlns:json="http://www.mulesoft.org/schema/mule/json"
+	xmlns:file="http://www.mulesoft.org/schema/mule/file" xmlns:os="http://www.mulesoft.org/schema/mule/os" xmlns:x12="http://www.mulesoft.org/schema/mule/x12" xmlns:sftp="http://www.mulesoft.org/schema/mule/sftp" xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core" xmlns:salesforce="http://www.mulesoft.org/schema/mule/salesforce" xmlns:http="http://www.mulesoft.org/schema/mule/http" xmlns="http://www.mulesoft.org/schema/mule/core" xmlns:doc="http://www.mulesoft.org/schema/mule/documentation" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd
+http://www.mulesoft.org/schema/mule/salesforce http://www.mulesoft.org/schema/mule/salesforce/current/mule-salesforce.xsd
+http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd
+http://www.mulesoft.org/schema/mule/sftp http://www.mulesoft.org/schema/mule/sftp/current/mule-sftp.xsd
+http://www.mulesoft.org/schema/mule/x12 http://www.mulesoft.org/schema/mule/x12/current/mule-x12.xsd
+http://www.mulesoft.org/schema/mule/os http://www.mulesoft.org/schema/mule/os/current/mule-os.xsd
+http://www.mulesoft.org/schema/mule/file http://www.mulesoft.org/schema/mule/file/current/mule-file.xsd
+http://www.mulesoft.org/schema/mule/json http://www.mulesoft.org/schema/mule/json/current/mule-json.xsd
+http://www.mulesoft.org/schema/mule/secure-properties http://www.mulesoft.org/schema/mule/secure-properties/current/mule-secure-properties.xsd
+http://www.mulesoft.org/schema/mule/salesforce-composite http://www.mulesoft.org/schema/mule/salesforce-composite/current/mule-salesforce-composite.xsd">
+
+	<sub-flow name="Salesforce-Operations" doc:id="0195afc1-81d4-4cba-82bb-4141fd50ac81" >
+		<logger level="INFO" doc:name="Entry : Salesforce-Operations" doc:id="26f3a032-582b-4635-b5a6-7a6d19e0eae2" message="Entry : Salesforce-Operations"/>
+		<salesforce:query doc:name="fetch data from salesforce" doc:id="62d06eba-9874-4bac-bebe-697a9fd62f77" config-ref="Salesforce_Config">
+			<salesforce:salesforce-query><![CDATA[Select id,Name,Payer_Claim_Number__c,Billing_Provider_Name__c,Billing_Provider_Address__c,Billing_Provider_City__c,Billing_Provider_Zip__c,Billing_Provider_NPI__c,Federal_Tax_ID__c,Billing_Provider_Taxonomy__c,Submitter_ID__c,Submitter_Contact_Name__c,Submitter_Contact_Phone__c,Filing_Indicator__c,Patient_First_Name__c,Patient_Last_Name__c,Patient_Street_Address__c,Patient_Address_2__c,Patient_City__c,Patient_State__c,Patient_Zipcode__c,Patient_Birthdate__c,Patient_Sex__c,Patient_Relationship__c,Insured_ID_Number__c,Insured_First_Name__c,Insured_Last_Name__c,Insured_Middle_Name__c,Insured_Birthdate__c,Insured_Street_Address__c,Insured_City__c,Insured_State__c,Insured_Zip__c,Insured_Policy_Group_Number__c,Insurance_Plan_Name__c,Related_Cause__c,Auto_Accident_State__c,Secondary_Insured_First_Name__c,Secondary_Insured_Last_Name__c,Secondary_Insurance_Relationship__c,Secondary_Policy_Group_Number__c,Secondary_Insurance_Name__c,Date_of_Current_Illness__c,Prior_Authorization_Number__c,Patients_Account__c,Accept_Assignment__c,Physician_Supplier_Signature__c,Diagnosis_A__c,Diagnosis_B__c,Diagnosis_C__c,Payer_State__c, (Select id,Claim_Number__c,Date_of_Service_From__c,Emergency_Indicator__c,Procedure_Code__c,Procedure_Modifier__c,Diagnosis_Pointer__c,Charges__c,Days_Units__c,ID_Qualifier__c,Rendering_Provider_ID__c,Date_of_Service_To__c,Name From Claim_Lines__r) From Claim__c WHERE Id IN (SELECT Claim__c FROM Claim_Line__c) limit 1]]></salesforce:salesforce-query>
+		</salesforce:query>
+		<ee:transform doc:name="SF data as Json" doc:id="ecbab7bd-fdbf-4701-84cb-dc2788e3a495">
+			<ee:message>
+				<ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+payload]]></ee:set-payload>
+			</ee:message>
+			<ee:variables>
+				<ee:set-variable variableName="queryPayload"><![CDATA[%dw 2.0
+output application/json
+---
+payload]]></ee:set-variable>
+			</ee:variables>
+		</ee:transform>
+		<ee:transform doc:name="var Status" doc:id="0597c804-d250-4f3b-b578-294ee310b057">
+			<ee:message>
+			</ee:message>
+			<ee:variables>
+				<ee:set-variable variableName="Status"><![CDATA[%dw 2.0
+output application/java
+---
+payload map(object,index)-> {
+	Status__c: "Processing",
+	Id: object.Id
+}]]></ee:set-variable>
+			</ee:variables>
+		</ee:transform>
+		<salesforce:update type="Claim__c" doc:name="Update" doc:id="54769c0c-059a-4601-9c83-5e9ea0671861" config-ref="Salesforce_Config">
+			<salesforce:records><![CDATA[#[vars.Status]]]></salesforce:records>
+		</salesforce:update>
+		<set-payload value="#[vars.queryPayload]" doc:name="Set Payload" doc:id="944958ff-2552-476d-bda5-04dedf2e1a31" />
+		<logger level="INFO" doc:name="Exit : Salesforce-Operations" doc:id="796f2132-e196-4911-98b5-0ffafba9e5a2" message="Exit : Salesforce-Operations"/>
+	</sub-flow>
+	<sub-flow name="MainFlow" doc:id="9ad303da-3b9b-4f1a-8676-af285c3cf9e4" >
+		<!-- Entry logger -->
+		<logger level="INFO" doc:name="Entry : MainFlow" doc:id="dca6b91d-1075-4bcc-a2ee-bff1a6a60c9c" message='Entry : MainFlow' />
+		<!-- Salesforce query connector to fetch data using soql query -->
+		<!-- Transforming received data from SF to JSON -->
+		<!-- Extracting claim id from payload -->
+		<flow-ref doc:name="Flow Reference" doc:id="e3c0ac0b-f86c-418b-b6eb-1b520fd57fa4" name="Salesforce-Operations" />
+		<ee:transform doc:name="var ClaimId" doc:id="b76e13b9-88ec-40c1-a769-a01e00973d10" >
+			<ee:message >
+			</ee:message>
+			<ee:variables >
+				<ee:set-variable variableName="ClaimId" ><![CDATA[%dw 2.0
+output application/json
+---
+payload map ( payload01 , indexOfPayload01 ) -> {
+	Claim_Id: payload01.Name default ""
+}
+	]]></ee:set-variable>
+			</ee:variables>
+		</ee:transform>
+		<!-- Storing claim id in object store with key as ClaimId -->
+		<os:store doc:name="Store: ClaimId" doc:id="1d21181f-8371-44c4-8096-4caf576fd652" key="ClaimId" failOnNullValue="false" objectStore="Object_store">
+			<os:value ><![CDATA[#[vars.ClaimId.Claim_Id]]]></os:value>
+		</os:store>
+
+		<!-- Json schema to validate data received from salesforce -->
+
+		<!--  <json:validate-schema doc:name="Validate data from salesforce" doc:id="d1a749ad-fa19-4d40-a534-134f700e0ed8" schema="schema/schema.json" /> &#45;&#45>;
+		<!&#45;&#45; Mapping salesforce data to X12 -->
+
+		<ee:transform doc:name="Map SF data to X12" doc:id="ba41e82e-eb57-4fe0-9d6f-66e6c49a5f1b">
+			<ee:message>
+				<ee:set-payload><![CDATA[%dw 2.0
+output application/java
+---
+{
+    "Errors": [],
+    "Delimiters": "*:^~",
+    "TransactionSets": {
+        "v005010X222A1": {
+            "837": [{
+                "Interchange": {
+                    "ISA09": now(),
+                    "ISA04": "",
+                    "ISA15": "P",
+                    "ISA03": "00",
+                    "ISA14": "1",
+                    "ISA02": "",
+                    "ISA13": 101,
+                    "ISA01": "00",
+                    "ISA12": "00501",
+                    "ISA08": "WAYSTAR",
+                    "ISA07": "ZZ",
+                    "ISA06": "1234567",
+                    "ISA05": "ZZ",
+                    "ISA16": ":",
+                    "ISA11": "^",
+                    "ISA10": 42060000
+                },
+                "Group": {
+                    "GS05": 63660000,
+                    "GS04": now(),
+                    "GS07": "X",
+                    "GS06": 101,
+                    "GS08": "005010X222A1",
+                    "GS01": "HC",
+                    "GS03": "WAYSTAR",
+                    "GS02": "WAYSTAR"
+                },
+                "Heading": {
+                    "BHT_BeginningOfHierarchicalTransaction": {
+                        "BHT02_TransactionSetPurposeCode": "00",
+                        "BHT04_TransactionSetCreationDate": now(),
+                        "BHT03_OriginatorApplicationTransactionIdentifier": "000770187",
+                        "BHT06_ClaimOrEncounterIdentifier": "CH",
+                        "BHT01_HierarchicalStructureCode": "0019",
+                        "BHT05_TransactionSetCreationTime": 63660000
+                    },
+                    "1000A_Loop": {
+                        "PER_SubmitterEDIContactInformation": [{
+                            "PER02_SubmitterContactName": payload[0].Submitter_Contact_Name__c default "ABSOLUTE MEDICAL",
+                            "PER04_CommunicationNumber": payload[0].Submitter_Contact_Phone__c default "4805551212",
+                            "PER01_ContactFunctionCode": "IC",
+                            "PER03_CommunicationNumberQualifier": "TE"
+                        }],
+                        "NM1_SubmitterName": {
+                            "NM109_SubmitterIdentifier": payload[0].Submitter_ID__c default "93778819",
+                            "NM101_EntityIdentifierCode": "41",
+                            "NM102_EntityTypeQualifier": "2",
+                            "NM108_IdentificationCodeQualifier": "46",
+                            "NM103_SubmitterLastOrOrganizationName": "Absolute"
+                        }
+                    },
+                    "1000B_Loop": {
+                        "NM1_ReceiverName": {
+                            "NM103_ReceiverName": "WAYSTAR",
+                            "NM101_EntityIdentifierCode": "40",
+                            "NM102_EntityTypeQualifier": "2",
+                            "NM108_IdentificationCodeQualifier": "46",
+                            "NM109_ReceiverPrimaryIdentifier": "93778819"
+                        }
+                    }
+                },
+                "SetTrailer": {
+                    "SE02": "1239",
+                    "SE01": 41
+                },
+                "Summary": {
+                },
+                "Id": "837",
+                "SetHeader": {
+                    "ST03": "005010X222A1",
+                    "ST01": "837",
+                    "ST02": "1239"
+                },
+                "Detail": {
+                    "2000A_Loop": payload map (object,index) -> {
+                        "PRV_BillingProviderSpecialtyInformation": {
+                            "PRV01_ProviderCode": "BI",
+                            "PRV02_ReferenceIdentificationQualifier": "PXC",
+                            "PRV03_ProviderTaxonomyCode": object.Billing_Provider_Taxonomy__c default "332B00000X" as String
+                        },
+                        "2000B_Loop": [{
+                            "SBR_SubscriberInformation": {
+                                "SBR09_ClaimFilingIndicatorCode": "12",
+                                "SBR02_IndividualRelationshipCode": "18",
+                                "SBR01_PayerResponsibilitySequenceNumberCode": "P",
+                                "SBR03_SubscriberGroupOrPolicyNumber": object.Insured_Policy_Group_Number__c default "B17250",
+                                "SBR04_SubscriberGroupName": object.Insurance_Plan_Name__c
+                            },
+                            "2010BA_Loop": {
+                                "DMG_SubscriberDemographicInformation": {
+                                    "DMG02_SubscriberBirthDate": object.Insured_Birthdate__c default "19570111" as String,
+                                    "DMG03_SubscriberGenderCode": object.Insured_Gender__c as String default "M",
+                                    "DMG01_DateTimePeriodFormatQualifier": "D8"
+                                },
+                                "NM1_SubscriberName": {
+                                    "NM109_SubscriberPrimaryIdentifier": object.Insured_ID_Number__c as String default "1234567890",
+                                    "NM101_EntityIdentifierCode": "IL",
+                                    "NM102_EntityTypeQualifier": "1",
+                                    "NM108_IdentificationCodeQualifier": "MI",
+                                    "NM103_SubscriberLastName": object.Insured_Last_Name__c as String default "Vatsal",
+                                    "NM104_SubscriberFirstName": object.Insured_First_Name__c default "JOE",
+                                    "NM105_SubscriberMiddleNameOrInitial": object.Insured_Middle_Name__c default "Middle"
+                                },
+                                "N3_SubscriberAddress": {
+                                    N301_SubscriberAddressLine: "875 W ARMY TRAIL RD"
+                                },
+                                N4_SubscriberCityStateZIPCode: {
+                                    "N401_SubscriberCityName": "ADDISON",
+                                    "N402_SubscriberStateCode": "IL",
+                                    "N403_SubscriberPostalZoneOrZIPCode": "606129998"
+                                }
+                            },
+                            "2010BB_Loop": {
+                                "N4_PayerCityStateZIPCode": {
+                                    "N401_PayerCityName": object.Payer_City__c as String default "CHICAGO",
+                                    "N402_PayerStateOrProvinceCode": "IL",
+                                    "N403_PayerPostalZoneOrZIPCode": object.Payer_Zip__c as String default "606804112"
+                                },
+                                "N3_PayerAddress": {
+                                    "N301_PayerAddressLine": object.Payer_Address__c as String default "1 PAYER WAY",
+                                    "N302_PayerAddressLine": object.Patient_Address_2__c as String default "Payer Address",
+                                },
+                                "NM1_PayerName": {
+                                    "NM101_EntityIdentifierCode": "PR",
+                                    "NM102_EntityTypeQualifier": "2",
+                                    "NM108_IdentificationCodeQualifier": "PI",
+                                    "NM103_PayerName": object.Payer_Name__c as String default "ABSOLUTE MEDICAL",
+                                    "NM109_PayerIdentifier": object.Payer_ID__c as String default "12345"
+                                }
+                            },
+                            "2300_Loop": [{
+                                "CLM_ClaimInformation": {
+                                    "CLM07_AssignmentOrPlanParticipationCode": "A",
+                                    "CLM06_ProviderOrSupplierSignatureIndicator": "Y",
+                                    "CLM01_PatientControlNumber": object.Name as String default "1000A",
+                                    "CLM09_ReleaseOfInformationCode": "Y",
+                                    "CLM02_TotalClaimChargeAmount": object.Total_Charges__c as Number default 140,
+                                    "CLM08_BenefitsAssignmentCertificationIndicator": "Y",
+                                    "CLM05_HealthCareServiceLocationInformation": {
+                                        "CLM03_ClaimFrequencyCode": "1",
+                                        "CLM01_PlaceOfServiceCode": object.Place_of_Service__c default "12",
+                                        "CLM02_FacilityCodeQualifier": "B"
+                                    }
+                                },
+                                "HI_HealthCareDiagnosisCode": {
+                                    "HI01_HealthCareCodeInformation": {
+                                        "HI02_DiagnosisCode": object.Diagnosis_A__c default "I890",
+                                        "HI01_DiagnosisTypeCode": "ABK"
+                                    }
+                                    
+                                    
+                                    
+                                    
+        
+                                },
+                                "2400_Loop": object.Claim_Lines__r map (item,index) ->
+                                {
+                                    "LX_ServiceLineNumber": {
+                                        "LX01_AssignedNumber": index + 1 as Number
+                                    },
+                                    "SV1_ProfessionalService": {
+                                        "SV104_ServiceUnitCount": item.Days_Units__c as Number default 1,
+                                        "SV107_CompositeDiagnosisCodePointer": {
+                                            "SV101_DiagnosisCodePointer": item.Diagnosis_Pointer__c as Number default 1
+                                        },
+                                        "SV101_CompositeMedicalProcedureIdentifier": {
+                                            "SV101_ProductOrServiceIDQualifier": "HC",
+                                            "SV102_ProcedureCode": "S8424",
+                                            "SV103_ProcedureModifier": "NA"
+                                        },
+                                        "SV102_LineItemChargeAmount": item.Charges__c as Number default 140,
+                                        "SV103_UnitOrBasisForMeasurementCode": "UN"
+                                    },
+                                    "DTP_DateServiceDate": {
+                                        "DTP01_DateTimeQualifier": "472",
+                                        "DTP02_DateTimePeriodFormatQualifier": "D8",
+                                        "DTP03_ServiceDate": item.Date_of_Service_From__c  as String default "20151124"
+                                    },
+                                    "REF_LineItemControlNumber": {
+                                        "REF01_ReferenceIdentificationQualifier": "6R",
+                                        "REF02_LineItemControlNumber": item.Name as String
+                                    },
+                                    "REF_PriorAuthorization": {
+                                        "REF01_ReferenceIdentificationQualifier": "G1",
+                                        "REF02_PriorAuthorizationNumber": object.Prior_Authorization_Number__c
+                                    },
+                                    "2420E_Loop": {
+                                        "NM1_OrderingProviderName": {
+                                            "NM101_EntityIdentifierCode": "DK",
+                                            "NM102_EntityTypeQualifier": "1",
+                                            "NM103_OrderingProviderLastName": "JONES",
+                                            "NM104_OrderingProviderFirstName": "CORINNA",
+                                            "NM108_IdentificationCodeQualifier": "XX",
+                                            "NM109_OrderingProviderIdentifier": "1578523098"
+                                        }
+                                    }
+                                },
+                            }]
+                        }],
+                        "2010AA_Loop": {
+                            "N4_BillingProviderCityStateZIPCode": {
+                                "N401_BillingProviderCityName": object.Billing_Provider_City__c as String default "CHICAGO",
+                                "N403_BillingProviderPostalZoneOrZIPCode": object.Billing_Provider_Zip__c as String default "606226236",
+                                "N402_BillingProviderStateOrProvinceCode": "IL"
+                            },
+                            "NM1_BillingProviderName": {
+                                "NM101_EntityIdentifierCode": "85",
+                                "NM102_EntityTypeQualifier": "2",
+                                "NM108_IdentificationCodeQualifier": "XX",
+                                "NM109_BillingProviderIdentifier": object.Billing_Provider_NPI__c default "1568417319" as String,
+                                "NM103_BillingProviderLastOrOrganizationalName": object.Billing_Provider_Name__c default "ABSOLUTE MEDICAL" as String
+                            },
+                            "N3_BillingProviderAddress": {
+                                "N301_BillingProviderAddressLine": object.Billing_Provider_Address__c default "1843 W Hubbard Street" as String,
+                                "N302_BillingProviderAddressLine": object.Billing_Provider_Address_Line_2__c default "Suite 2A"
+                            },
+                            "REF_BillingProviderTaxIdentification": {
+                                "REF02_BillingProviderTaxIdentificationNumber": object.Federal_Tax_ID__c as String  default "593778819",
+                                "REF01_ReferenceIdentificationQualifier": "EI"
+                            }
+                        }
+                    },
+                    "Name": "Health Care Claim"
+                }
+            }]
+        }
+    },
+    "FunctionalAcksGenerated": [{
+        "Interchange": {
+            "ISA09": now(),
+            "ISA04": "",
+            "ISA15": "P",
+            "ISA03": "00",
+            "ISA14": "1",
+            "ISA02": "",
+            "ISA13": 101,
+            "ISA01": "00",
+            "ISA12": "00501",
+            "ISA08": "1234567",
+            "ISA07": "ZZ",
+            "ISA06": "WAYSTAR",
+            "ISA05": "ZZ",
+            "ISA16": ":",
+            "ISA11": "^",
+            "ISA10": 42060000
+        },
+        "Group": {
+            "GS05": 63660000,
+            "GS04": now(),
+            "GS07": "X",
+            "GS06": 101,
+            "GS08": "005010X222A1",
+            "GS01": "HC",
+            "GS03": "WAYSTAR",
+            "GS02": "WAYSTAR"
+        },
+        "Heading": {
+            "0200_AK1": {
+                "AK103": "005010X222A1",
+                "AK101": "HC",
+                "AK102": 101
+            },
+            "0700_AK9": {
+                "AK903": 1,
+                "AK904": 1,
+                "AK901": "A",
+                "AK902": 1
+            }
+        },
+        "Id": "997",
+        "Name": "Functional Acknowledgment"
+    }],
+    "InterchangeAcksGenerated": [{
+        "Interchange": {
+            "ISA09": now(),
+            "ISA04": "",
+            "ISA15": "P",
+            "ISA03": "00",
+            "ISA14": "1",
+            "ISA02": "",
+            "ISA13": 101,
+            "ISA01": "00",
+            "ISA12": "00501",
+            "ISA08": "1234567",
+            "ISA07": "ZZ",
+            "ISA06": "WAYSTAR",
+            "ISA05": "ZZ",
+            "ISA16": ":",
+            "ISA11": "^",
+            "ISA10": 42060000
+        },
+        "TA104": "A",
+        "TA105": "000",
+        "TA102": "2017-05-08T00:00:00+05:30",
+        "TA103": 42060000,
+        "TA101": 101
+    }]
+}]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+
+		<!-- X12 Write connector to convert edi schema to 837 EDI -->
+		<x12:write doc:name="Write" doc:id="bbb8edb4-2002-444f-a7de-2bde992ba1b9" outputEdiMimeType="APPLICATION_EDIX12" config-ref="X12_EDI_Config"/>
+		<!-- Transforming 837 EDI to string -->
+
+		<ee:transform doc:name="EDI as String" doc:id="48f2c5e1-406e-43f2-8b57-9edc97c4b40e">
+			<ee:message>
+				<ee:set-payload><![CDATA[%dw 2.0
+output text/plain
+---
+payload as String]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+		<!-- Storing edi into object store with key as edi -->
+		<os:store doc:name="Store edi into object store" doc:id="5418b981-03c2-452c-9bd9-ba254e594100" key="edi" objectStore="Object_store"/>
+		<!-- Flow reference to WriteToSFTP flow -->
+		<flow-ref doc:name="WriteToSFTP" doc:id="d2464918-91b1-44c5-ae8d-fca7773530b0" name="WriteToSFTP" />
+		<logger level="INFO" doc:name="Exit : MainFlow" doc:id="575d63f4-73b1-45ae-9eb8-1f7e1dec2380" message='Exit  : MainFlow'/>
+		<!-- Exit logger -->
+	</sub-flow>
+	<!-- Sub-flow: WriteToSFTP -->
+	<sub-flow name="WriteToSFTP" doc:id="10a02d25-9648-4e98-b060-89d8a37eb41f" >
+		<!-- Entry logger -->
+		<logger level="INFO" doc:name="Entry : WriteToSFTP" doc:id="4b2da45c-dc77-4793-ac68-e2e5009094c4" message='Entry : WriteToSFTP'/>
+		<!-- Retrieving BatchId from object store with default value as 1 -->
+		<os:retrieve doc:name="Retrieve batchId" doc:id="4b690218-029f-4781-bf6e-2542dc917ea2" key="batchId" target="batchId" targetValue="#[payload as String]" objectStore="Object_store">
+			<os:default-value ><![CDATA[1]]></os:default-value>
+		</os:retrieve>
+		<!-- Defining batch name format -->
+		<ee:transform doc:name="var BatchName" doc:id="188fa0b4-cc0b-4efa-9b94-6b8a46c86da4" >
+			<ee:message >
+			</ee:message>
+			<ee:variables >
+				<ee:set-variable variableName="BatchName" ><![CDATA[%dw 2.0
+output application/java
+---
+now() as String {format: "yyyyMMdd"} ++ "_Absolute_"  ++ vars.batchId ++".CLP"]]></ee:set-variable>
+			</ee:variables>
+		</ee:transform>
+		<!-- Retrieving 837 edi from object store -->
+		<os:retrieve doc:name="Retrieve key edi" doc:id="89b2ad22-65f1-4935-a6c5-1196e6871363" key="edi" objectStore="Object_store"/>
+		<!-- Sftp write connector to write edi to wayster sftp server -->
+		<sftp:write doc:name="Write to Waystar SFTP Server" doc:id="1d36d22f-0512-4e4c-b0b8-88fa44bc5f15" path='#["Upload/" ++ vars.BatchName]' config-ref="SFTP_Config"/>
+		<!-- Remove edi from object store as it is written to sftp server -->
+		<os:remove doc:name="Remove the edi object" doc:id="b195e5cb-14c0-42c9-8445-3b944eb24f41" key="edi" objectStore="Object_store"/>
+		<!-- Storing batch id in object store with key as batchId -->
+		<os:store doc:name="Store the batchId" doc:id="f26cb54b-f871-4e2e-93f9-1ce883c1989d" key="batchId" objectStore="Object_store">
+			<os:value ><![CDATA[#[(vars.batchId as Number + 1)]]]></os:value>
+		</os:store>
+		<!-- Retrieving claim id from object store -->
+		<os:retrieve doc:name="Retrieve: ClaimId from MainFlow" doc:id="24610700-29b9-489c-b49c-ab723571d7c3" key="ClaimId" target="var1" objectStore="Object_store"/>
+		<!-- Storing claimId with key as  batchId -->
+		<os:store doc:name="Store:  Key: BatchId;  Value: ClaimId" doc:id="4d428112-6883-41ea-bbe6-5919298cd6a4" key="#[vars.batchId]" failOnNullValue="false" objectStore="Object_store">
+			<os:value ><![CDATA[#[vars.var1]]]></os:value>
+		</os:store>
+		<!-- Exit Logger -->
+		<logger level="INFO" doc:name="Exit : WriteToSFTP" doc:id="061901f5-d2c7-479e-a791-419d65974ee2" message='Exit : WriteToSFTP'/>
+	</sub-flow>
+	<!-- Initial Flow -->
+	<flow name="InitialFlow" doc:id="f7e9155d-c9be-4ffa-b7aa-51264759657a" >
+		<http:listener doc:name="Listener" doc:id="905a7746-0e65-42e3-8dd0-09a3d650071e" path="/edi" config-ref="HTTP_Listener_config" allowedMethods="GET"/>
+		<!-- Entry Logger -->
+		<logger level="INFO" doc:name="Entry : InitialFlow" doc:id="5907ee91-23fb-4681-a7a9-bbc842a5a352" message='Entry : InitialFlow' />
+		<!-- Try Block -->
+		<try doc:name="Try" doc:id="2d835449-552a-4867-a629-9405a4ac8fe4" >
+			<!-- Retrieving 837 edi from object store -->
+			<os:retrieve doc:name="Retrieve key edi" doc:id="df4bb3ae-ebf2-4185-b4e6-143acfaa7099" key="edi" objectStore="Object_store"/>
+			<!-- Calling WriteToSFTP and MainFlow as object store contains key-->
+			<flow-ref doc:name="WriteToSFTP" doc:id="da7151a8-84d6-4aef-9a2c-97f489dd33d4" name="WriteToSFTP"/>
+			<flow-ref doc:name="MainFlow" doc:id="583293dc-6afc-40cb-9cc9-957e480235dd" name="MainFlow"/>
+			<!-- Calling mainFlow if key is not present in object store -->
+			<error-handler>
+				<on-error-continue enableNotifications="true" logException="true" doc:name="On Error Continue" doc:id="d607d0f2-7b4f-4c46-a8d2-eec89787b0c5" type="OS:KEY_NOT_FOUND">
+					<flow-ref doc:name="Calling main flow" doc:id="5189d1af-2dce-4d56-9048-47421dc3ecde" name="MainFlow" target="data"/>
+					<set-payload value="#[vars.data]" doc:name="Set Payload" doc:id="34105219-2b9a-49ea-8f35-00173f0a5f3b" />
+				</on-error-continue>
+			</error-handler>
+		</try>
+		<!-- Exit logger -->
+		<logger level="INFO" doc:name="Exit : InitialFlow" doc:id="c74f4609-0a14-4ed6-9c4b-843d39517760" message='Exit : InitialFlow' />
+		<!-- On error propagate to handle errors in initialFlow-->
+		<error-handler>
+			<on-error-propagate enableNotifications="true" logException="true" doc:name="On Error Propagate" doc:id="98447aa5-6b62-4681-9e64-6244f53162fd" >
+				<set-payload value='#["error occured "]' doc:name="Set Payload" doc:id="3d188df5-05b9-456f-a332-0fdc13dbe3c8" />
+			</on-error-propagate>
+		</error-handler>
+	</flow>
+</mule>

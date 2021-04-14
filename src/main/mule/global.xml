@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule xmlns:secure-properties="http://www.mulesoft.org/schema/mule/secure-properties" xmlns:json="http://www.mulesoft.org/schema/mule/json"
+	xmlns:file="http://www.mulesoft.org/schema/mule/file"
+	xmlns:os="http://www.mulesoft.org/schema/mule/os" xmlns:x12="http://www.mulesoft.org/schema/mule/x12" xmlns:sftp="http://www.mulesoft.org/schema/mule/sftp" xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core" xmlns:salesforce="http://www.mulesoft.org/schema/mule/salesforce" xmlns:http="http://www.mulesoft.org/schema/mule/http" xmlns="http://www.mulesoft.org/schema/mule/core" xmlns:doc="http://www.mulesoft.org/schema/mule/documentation" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd
+http://www.mulesoft.org/schema/mule/salesforce http://www.mulesoft.org/schema/mule/salesforce/current/mule-salesforce.xsd
+http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd
+http://www.mulesoft.org/schema/mule/sftp http://www.mulesoft.org/schema/mule/sftp/current/mule-sftp.xsd
+http://www.mulesoft.org/schema/mule/x12 http://www.mulesoft.org/schema/mule/x12/current/mule-x12.xsd
+http://www.mulesoft.org/schema/mule/os http://www.mulesoft.org/schema/mule/os/current/mule-os.xsd
+http://www.mulesoft.org/schema/mule/file http://www.mulesoft.org/schema/mule/file/current/mule-file.xsd
+http://www.mulesoft.org/schema/mule/json http://www.mulesoft.org/schema/mule/json/current/mule-json.xsd
+http://www.mulesoft.org/schema/mule/secure-properties http://www.mulesoft.org/schema/mule/secure-properties/current/mule-secure-properties.xsd">
+	<salesforce:sfdc-config name="Salesforce_Config" doc:name="Salesforce Config" doc:id="7b014340-7fbc-4daf-8ea9-2fd44d3f324c" >
+		<salesforce:basic-connection username="${sfdc.username}" password="${secure::sfdc.password}" securityToken="${secure::sfdc.token}" url="${sfdc.url}">
+			<reconnection >
+				<reconnect count="3" />
+			</reconnection>
+		</salesforce:basic-connection>
+	</salesforce:sfdc-config>
+	<x12:config name="X12_EDI_Config" doc:name="X12 EDI Config" doc:id="95c27c83-e5b4-4ede-a91d-2c0af966c1ef" formValidation="HIPAA_SNIP1" requireUniqueInterchanges="false">
+		<x12:schemas >
+			<x12:schema value="/hipaa/005010X222A1/837.esl" />
+			<x12:schema value="999.esl" />
+			<x12:schema value="/hipaa/005010X214/277.esl" />
+		</x12:schemas>
+	</x12:config>
+	<os:object-store name="Object_store" doc:name="Object store" doc:id="6b08f55d-c129-43ee-962b-97590ca013cc" />
+	<sftp:config name="SFTP_Config" doc:name="SFTP Config" doc:id="9f20af75-073b-4ce2-90d2-79f981a756d8" >
+		<sftp:connection host="${sftpwaystar.host}" username="${sftpwaystar.user}" password="${secure::sftpwaystar.password}" port="${sftpwaystar.port}">
+			<reconnection >
+				<reconnect count="3" />
+			</reconnection>
+		</sftp:connection>
+	</sftp:config>
+	<configuration-properties doc:name="Configuration properties" doc:id="dc707bac-9bdf-4b0a-9dbe-c0f71db1d042" file="${env}.properties" />
+	<secure-properties:config name="Secure_Properties_Config" doc:name="Secure Properties Config" doc:id="2b737b10-2a7f-4ada-a543-04d160fd37bc" file="myConfig.properties" key="absolute" >
+		<secure-properties:encrypt algorithm="Blowfish" />
+	</secure-properties:config>
+	
+	<http:listener-config name="HTTP_Listener_config" doc:name="HTTP Listener config" doc:id="34e7feb9-8030-4a4a-8c80-db069bc9436b">
+		<http:listener-connection host="0.0.0.0" port="8081" />
+	</http:listener-config>
+	<global-property doc:name="Global Property" doc:id="18bd8f08-bb2f-489a-a051-0dd34a4d0872" name="env" value="myConfig" />
+	
+</mule>

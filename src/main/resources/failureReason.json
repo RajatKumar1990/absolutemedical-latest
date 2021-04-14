@@ -1,0 +1,10 @@
+ {
+"A0": "Acknowledgement/Forwarded-The claim/encounter has been forwarded to another entity.",
+"A1": "Acknowledgement/Receipt – The claim/encounter has been received.",
+"A2":"Acknowledgement/Acceptance – The claim/encounter has been accepted.",
+"A3": "Acknowledgement/Returned as unprocessable claim – The claim/encounter has been rejected. The claim must be resubmitted.",
+"A4 ":"Acknowledgement/Not Found – The claim/encounter cannot be found",
+"A6": "Acknowledgement/Rejected for Missing Information – The claim/encounter is missing the information specified in the Status details and has been rejected",
+"A7": "Acknowledgement/Rejected for Invalid Information – The claim/encounter has invalid information as specified in the Status details and has been rejected.",
+"A8": "Acknowledgement/Rejected for relational field in error"
+}

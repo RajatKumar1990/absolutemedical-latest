@@ -1,0 +1,77 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xmlns:munit="http://www.mulesoft.org/schema/mule/munit" xmlns:munit-tools="http://www.mulesoft.org/schema/mule/munit-tools"
+	xmlns="http://www.mulesoft.org/schema/mule/core" xmlns:doc="http://www.mulesoft.org/schema/mule/documentation"
+	xsi:schemaLocation="
+		http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+		http://www.mulesoft.org/schema/mule/munit http://www.mulesoft.org/schema/mule/munit/current/mule-munit.xsd
+		http://www.mulesoft.org/schema/mule/munit-tools  http://www.mulesoft.org/schema/mule/munit-tools/current/mule-munit-tools.xsd">
+	<munit:config name="absolutemedical-test-suite.xml" />
+	<munit:test name="absolutemedical-test-suite-sftp-wayster" doc:id="e2814a22-f55c-4554-80aa-5e19bca8b832" description="Test">
+		<munit:behavior >
+			<munit-tools:mock-when doc:name=" Salesforce Query" doc:id="4c77b079-8020-4a37-a152-a2ec3e40eaca" processor="salesforce:query">
+				<munit-tools:with-attributes>
+					<munit-tools:with-attribute whereValue="fetch data from salesforce" attributeName="doc:name" />
+					<munit-tools:with-attribute whereValue="62d06eba-9874-4bac-bebe-697a9fd62f77" attributeName="doc:id" />
+					<munit-tools:with-attribute whereValue="Salesforce_Config" attributeName="config-ref" />
+				</munit-tools:with-attributes>
+				<munit-tools:then-return>
+					<munit-tools:payload value="#[MunitTools::getResourceAsString('payload-output.json')]" mediaType="application/json" />
+				</munit-tools:then-return>
+			</munit-tools:mock-when>
+			<munit-tools:mock-when doc:name="Mock SFTP Write " doc:id="e9d16072-3e03-4152-990e-db4b5e269a6d" processor="sftp:write">
+				<munit-tools:with-attributes >
+					<munit-tools:with-attribute whereValue="Write to Waystar SFTP Server" attributeName="doc:name" />
+					<munit-tools:with-attribute whereValue="1d36d22f-0512-4e4c-b0b8-88fa44bc5f15" attributeName="doc:id" />
+				</munit-tools:with-attributes>
+				<munit-tools:then-return >
+					<munit-tools:payload value="#[output text/plain --- readUrl('classpath://InitialFlowtestauto\mock_payload.dwl')]" />
+					<munit-tools:variables >
+						<munit-tools:variable key="t" value="#[output application/java --- readUrl('classpath://InitialFlowtestauto\mock_variable_.dwl')]" mediaType="application/java" encoding="UTF-8" />
+						<munit-tools:variable key="BatchName" value="#[output application/java --- readUrl('classpath://InitialFlowtestauto\mock_variable_1.dwl')]" mediaType="application/java" encoding="UTF-8" />
+					</munit-tools:variables>
+				</munit-tools:then-return>
+			</munit-tools:mock-when>
+			<munit:set-event doc:name="Set Event" doc:id="90099e9a-0415-4e0f-b1f8-019796584f0e" >
+				<munit:payload value="#[readUrl('classpath://InitialFlowtestauto\set-event_payload.dwl')]" encoding="UTF-8" />
+			</munit:set-event>
+		</munit:behavior>
+		<munit:execution >
+			<flow-ref doc:name="Flow-ref to InitialFlow" doc:id="6178fe9a-3e87-4620-a2b4-32e5c23b7a28" name="InitialFlow"/>
+		</munit:execution>
+		<munit:validation >
+			<munit-tools:assert-that doc:name="Assert that (Payload)" doc:id="9090993f-6456-40b0-b140-9b7de3219468" message='#["Payload is empty"]' expression="#[payload]" is="#[MunitTools::notNullValue()]"/>
+		</munit:validation>
+	</munit:test>
+	<munit:test name="absolutemedical-test-suite-salesforce" doc:id="42740e91-2a92-4359-844b-30b256e14c09" description="Test">
+		<munit:behavior >
+			<munit-tools:mock-when doc:name="Mock Salesforce Query" doc:id="f1b73e69-bab5-4d01-b394-e2408af56049" processor="salesforce:query">
+				<munit-tools:with-attributes >
+					<munit-tools:with-attribute whereValue="fetch data from salesforce" attributeName="doc:name" />
+					<munit-tools:with-attribute whereValue="62d06eba-9874-4bac-bebe-697a9fd62f77" attributeName="doc:id" />
+					<munit-tools:with-attribute whereValue="Salesforce_Config" attributeName="config-ref" />
+				</munit-tools:with-attributes>
+				<munit-tools:then-return >
+					<munit-tools:payload value="#[MunitTools::getResourceAsString('payload-output.json')]" mediaType="application/json" />
+				</munit-tools:then-return>
+			</munit-tools:mock-when>
+			<munit-tools:mock-when doc:name="Mock Salesforce Update" doc:id="23900747-b68d-435a-89bc-938da2e657ae" processor="salesforce:update">
+				<munit-tools:with-attributes >
+					<munit-tools:with-attribute whereValue="54769c0c-059a-4601-9c83-5e9ea0671861" attributeName="doc:id" />
+				</munit-tools:with-attributes>
+				<munit-tools:then-return >
+					<munit-tools:payload value="#[output application/java --- readUrl('classpath://InitialFlowtestauto\Sfupdate.dwl')]" mediaType="application/java" encoding="UTF-8" />
+				</munit-tools:then-return>
+			</munit-tools:mock-when>
+		</munit:behavior>
+		<munit:execution >
+			<flow-ref doc:name="Flow-ref to InitialFlow" doc:id="e1d610b6-f487-4e09-b1b2-ee1c0531fa98" name="InitialFlow"/>
+		</munit:execution>
+		<munit:validation >
+			<munit-tools:assert-that doc:name="Assert that" doc:id="48a018d6-3b8a-4680-9ee9-0c3cf6f8018b" message='#["Error while fetching data from salesforce"]' expression="#[payload]" is="#[MunitTools::notNullValue()]"/>
+		</munit:validation>
+	</munit:test>
+
+
+</mule>

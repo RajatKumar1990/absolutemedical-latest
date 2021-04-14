@@ -1,0 +1,194 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule xmlns:os="http://www.mulesoft.org/schema/mule/os" xmlns:secure-properties="http://www.mulesoft.org/schema/mule/secure-properties"
+	xmlns:salesforce="http://www.mulesoft.org/schema/mule/salesforce"
+	xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core" xmlns:x12="http://www.mulesoft.org/schema/mule/x12" xmlns:sftp="http://www.mulesoft.org/schema/mule/sftp" xmlns:file="http://www.mulesoft.org/schema/mule/file" xmlns:email="http://www.mulesoft.org/schema/mule/email" xmlns:http="http://www.mulesoft.org/schema/mule/http" xmlns="http://www.mulesoft.org/schema/mule/core" xmlns:doc="http://www.mulesoft.org/schema/mule/documentation" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd
+http://www.mulesoft.org/schema/mule/email http://www.mulesoft.org/schema/mule/email/current/mule-email.xsd
+http://www.mulesoft.org/schema/mule/file http://www.mulesoft.org/schema/mule/file/current/mule-file.xsd
+http://www.mulesoft.org/schema/mule/sftp http://www.mulesoft.org/schema/mule/sftp/current/mule-sftp.xsd
+http://www.mulesoft.org/schema/mule/x12 http://www.mulesoft.org/schema/mule/x12/current/mule-x12.xsd
+http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd
+http://www.mulesoft.org/schema/mule/salesforce http://www.mulesoft.org/schema/mule/salesforce/current/mule-salesforce.xsd
+http://www.mulesoft.org/schema/mule/secure-properties http://www.mulesoft.org/schema/mule/secure-properties/current/mule-secure-properties.xsd
+http://www.mulesoft.org/schema/mule/os http://www.mulesoft.org/schema/mule/os/current/mule-os.xsd">
+	<!-- Sub Flow EDI-operations -->
+	<sub-flow name="EDI-operations" doc:id="e20418ca-1bd8-47d0-9b18-3f2fe54745d5">
+		<!-- Entry Logger -->
+		<logger level="INFO" doc:name="Entry : EDI-operations" doc:id="7af9e8d6-8de2-449f-9d42-f0bc49e0f989" message="Entry : EDI-operations"/>
+		<!-- Choice router to check whether edi has errors or not -->
+		<choice doc:name="Choice" doc:id="ff10d520-81f0-4112-b8c1-5742326e4c2d">
+			<!-- When edi does not contain any errors -->
+				<when expression='#[isEmpty(payload."Errors")]'>
+					<flow-ref doc:name="Flow Reference to EDI Routing " doc:id="b658c7a8-1785-4853-8060-350aaa4be4b0" name="EDI-Routing" target="ediData" />
+					<!-- SFTP Move connector to archieve edi files -->
+					<sftp:move doc:name="Moving file to Archieve" doc:id="3e5193d7-c72a-4f76-8206-44bc9488cae6" sourcePath="#[vars.fpath]" targetPath="Download/Archive" config-ref="SFTP_Config">
+					<reconnect />
+				</sftp:move>
+					<!-- Salesforce connector to invoke apex rest method -->
+					<salesforce:invoke-apex-rest-method className="MulesoftService" methodName="updateClaim^/muleservice/*^HttpPost^String" doc:name="Invoke apex rest method" doc:id="6d0bc69e-ec5e-4645-80df-6a111c79ba5d" target="apexData" config-ref="Salesforce_Config">
+					<reconnect />
+					<salesforce:request ><![CDATA[#[vars.ediData]]]></salesforce:request>
+				</salesforce:invoke-apex-rest-method> 
+				</when>
+				<otherwise>
+				<!-- Choice default block if edi contains errors -->
+					<!-- Retrieving edi errors in key Errors -->
+					<ee:transform doc:name="Transform Message" doc:id="4683d6bc-74f9-49e4-bc26-ef832b7a6c2d">
+						<ee:message>
+							<ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+{
+	"Errors": payload."Errors"
+}]]></ee:set-payload>
+						</ee:message>
+					</ee:transform>
+					<!-- Logging EDI errors -->
+					<logger level="INFO" doc:name="Logging EDI Errors" doc:id="1a631b34-ba5b-49e7-b2a3-3f2b045f9620" message="#[payload]" />
+				
+</otherwise>
+			</choice>
+		<!-- Exit Logger -->
+		<logger level="INFO" doc:name="Exit : EDI-operations" doc:id="9c9c1363-e916-4eca-9cbc-f94f38bcf1a6" message="Exit : EDI-operations"/>
+	
+</sub-flow>
+	<!-- Subflow EDI-Routing for routing to specific edi (277CA, 277U, 999) -->
+	<sub-flow name="EDI-Routing" doc:id="1f325117-dae8-44aa-904c-cf5c814566e2">
+		<!-- Entry Logger -->
+		<logger level="INFO" doc:name="Entry : EDI-Routing" doc:id="d43c890a-4025-4c1e-9b88-83a61ca91097" message="Entry : EDI-Routing"/>
+		<!-- Choice Router -->
+		<choice doc:name="Choice" doc:id="d43a27b0-ae8e-4413-8867-63307045896c">
+			<!-- Routing to 277CA and extracting required values using DW -->
+			<when expression='#[(keysOf(payload."TransactionSets")[0]) ~= "v005010X214"]'>
+				<ee:transform doc:name="277CA" doc:id="fdddc82d-95ac-4899-a2fb-ca8946eaed6c">
+			<ee:message>
+				<ee:set-payload><![CDATA[%dw 2.0
+output application/json
+var data  = readUrl("classpath://failureReason.json", "application/json")
+
+var status = flatten(payload."TransactionSets"."v005010X214"."277".Detail."2000A_Loop" flatMap ((item, index) -> item."2000B_Loop"."2000C_Loop" flatMap ((item, index) -> item."2000D_Loop" map ((item, index) -> item."2200D_Loop" flatMap ((item, index) -> item.STC_ClaimLevelStatusInformation.STC03_StatusInformationActionCode)))))
+var payerClaim = flatten(payload."TransactionSets"."v005010X214"."277".Detail."2000A_Loop" flatMap ((item, index) -> item."2000B_Loop"."2000C_Loop" flatMap ((item, index) -> item."2000D_Loop" map ((item, index) -> item."2200D_Loop".REF_ClaimIdentifierForTransmissionIntermediaries.REF02_ClearinghouseTraceNumber))))
+var cname = flatten(payload."TransactionSets"."v005010X214"."277".Detail."2000A_Loop" flatMap ((item, index) -> item."2000B_Loop"."2000C_Loop" flatMap ((item, index) -> item."2000D_Loop" map ((item, index) -> item."2200D_Loop" flatMap ((item, index) -> item.TRN_ClaimStatusTrackingNumber.TRN02_PatientControlNumber)))))
+var reportName = (payload."TransactionSets"."v005010X214"."277".Group.GS08)[0]
+var size = sizeOf(flatten(payload."TransactionSets"."v005010X214"."277".Detail."2000A_Loop" flatMap ((item, index) -> item."2000B_Loop"."2000C_Loop" flatMap ((item, index) -> item."2000D_Loop" map ((item, index) -> item."2200D_Loop" flatMap ((item, index) -> item.TRN_ClaimStatusTrackingNumber.TRN02_PatientControlNumber))))))
+var reasonCode = flatten(payload."TransactionSets"."v005010X214"."277".Detail."2000A_Loop" flatMap ((item, index) -> item."2000B_Loop"."2000C_Loop" flatMap ((item, index) -> item."2000D_Loop" map ((item, index) -> item."2200D_Loop" flatMap ((item, index) -> item.STC_ClaimLevelStatusInformation.STC01_HealthCareClaimStatus.STC01_HealthCareClaimStatusCategoryCode)))))
+---
+{
+	reportName: if(reportName == "005010X214") ("277CA") else if(reportName == "005010X228") ("277U") else ("999"),
+    reportStatus: "Success",
+	batchId: "123654",
+	transactionDate: vars.date[0 to 7],
+	recordCount: size,
+	dataSet: status map ((item, index) ->  {
+		payerClaimNumber: payerClaim[index] default "",
+		salesforceClaimId: "a3t55000000B7ajAAC",
+		salesforceClaimName: cname[index],
+		claimStatus: if(item=="WQ")("Passed")else("Rejected"),
+		faliureReason: if(item == "WQ")("") else (data[reasonCode[index]])
+	})
+}]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+			</when>
+			<!-- Routing to 999 and extracting required values using DW -->
+			<when expression='#[(keysOf(payload."TransactionSets")[0]) ~= "v005010X231A1"]'>
+				<ee:transform doc:name="999" doc:id="26408835-5f7e-465b-b449-0dace336e09b">
+					<ee:message>
+						<ee:set-payload><![CDATA[%dw 2.0
+output application/json
+var status = (payload.TransactionSets.v005010X231A1."999".Heading.AK9_FunctionalGroupResponseTrailer.AK901_FunctionalGroupAcknowledgeCode)[0]
+var statusF = if(status=="A") ("Success") else("Failure")
+var batchId = (payload.TransactionSets.v005010X231A1."999".Group.GS06)[0]
+var recordCount = (payload.TransactionSets.v005010X231A1."999".Heading.AK9_FunctionalGroupResponseTrailer.AK903_NumberOfReceivedTransactionSets)[0]
+---
+{
+	reportName: "999",
+	reportStatus: statusF,
+	batchId: batchId,
+	transactionDate: vars.date[0 to 7],
+    recordCount: recordCount,
+    dataSet: [1 to recordCount][0] map {
+    	"payerClaimNumber": "AM989972534372",
+         "salesforceClaimId": "a3t55000000B7ajAAC",
+        "salesforceClaimName": "C-0001",
+         claimStatus: statusF,
+          "faliureReason": ""   
+    }
+	
+}]]></ee:set-payload>
+					</ee:message>
+				</ee:transform>
+			</when>
+			<!-- Routing to 277U and extracting required values using DW -->
+			<otherwise>
+				<ee:transform doc:name="277U" doc:id="0d5476d0-0ef6-4df1-bab3-65fd2b1a64d8">
+					<ee:message>
+						<ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+payload]]></ee:set-payload>
+					</ee:message>
+				</ee:transform>
+			</otherwise>
+		</choice>
+		<!-- Exit logger -->
+		<logger level="INFO" doc:name="Exit :  EDI-Routing" doc:id="a4ac1fa2-e1a9-447c-b2e9-0b2a5a87a181" message="Exit :  EDI-Routing"/>
+	
+</sub-flow>
+	<!-- Main flow to perform sftp operations -->
+	<flow name="mainFlow" doc:id="8f0a7a89-6fd0-4da4-9ded-70d7319da43a">
+		<http:listener doc:name="Listener" doc:id="ffe98d39-f389-42bc-85c7-a9d4d1579a83" path="/rd1" allowedMethods="GET" config-ref="HTTP_Listener_config">
+		</http:listener>
+		<!-- Entry Logger -->
+		<logger level="INFO" doc:name="Entry : mainFlow" doc:id="e15da85b-f8b9-4226-8979-e392d2866999" message="Entry : mainFlow" />
+		<!-- Retrieving all edi files from wayster sftp server -->
+		<sftp:list doc:name="List EDI files from Wayster" doc:id="47b0a063-20a4-4322-9fe8-d50c41f7527c" directoryPath="/Download" config-ref="SFTP_Config">
+			<sftp:matcher filenamePattern="*.txt" />
+		</sftp:list>
+		<!-- for each loop to iterate over each edi file -->
+		<foreach doc:name="For Each" doc:id="fbbe0d4d-1af0-4442-8bb4-9cd156a0c894" >
+			<!-- reading edi file using SFTP Read connector -->
+			<sftp:read doc:name="Reading each file" doc:id="f9fd3ed2-c084-401c-bd23-cc4d3efb83d6" path="#[attributes.path]" config-ref="SFTP_Config"/>
+			<!-- Extracting date from file path name and storing it in variable date -->
+			<set-variable value='#[(attributes.path splitBy ".")[1]]' doc:name="Date" doc:id="e5c45d4d-68d6-4ac7-95a0-369889ab2632" variableName="date" />
+			<!-- storing file path in variable fpath -->
+			<set-variable value="#[attributes.path]" doc:name="File Path" doc:id="25b27d94-0d96-4bba-89eb-ed8436da6684" variableName="fpath"/>
+			<!-- X12 read connector to generate edi schema for one of the following : 277CA,277U,999 -->
+			<x12:read doc:name="Read" doc:id="f1e7d882-5695-4335-bd47-168e53ff0fac" config-ref="X12_EDI_Config"/>
+			<ee:transform doc:name="Transform Message" doc:id="b77f5b0e-1415-42f7-ad28-b14dae2cdcde" >
+				<ee:message >
+					<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+payload]]></ee:set-payload>
+				</ee:message>
+			</ee:transform>
+			<!-- Calling EDI Operations flow -->
+			<flow-ref doc:name="EDI Operations" doc:id="110f90b5-e480-4d42-ae74-2f9f489a586e" name="EDI-operations" />
+		</foreach>
+		<!-- for each loop ended -->
+		<!-- Setting payload to edi -->
+		<set-payload value="#[vars.ediData]" doc:name="Set Payload" doc:id="907bbc3e-d103-4f0c-97b5-7dc5ad870f8f" />
+		<!-- Exit Logger -->
+		<logger level="INFO" doc:name="Exit : mainFlow" doc:id="9780e2b2-a48b-4999-9102-fb02a6a7ec5b" message="Exit : mainFlow"/>
+		<error-handler >
+			<on-error-propagate enableNotifications="true" logException="true" doc:name="On Error Propagate" doc:id="032f522c-0448-4ada-811a-0516fdd12e48" type="ANY">
+				<ee:transform doc:name="Transform Message" doc:id="a77f126f-8fea-410f-831f-d5fefe319571" >
+					<ee:message >
+						<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+{
+	"Type" : error.errorType.identifier,
+	"Description": error.description,
+	"Status": "Error in " ++ error.errorType.namespace as String
+}]]></ee:set-payload>
+					</ee:message>
+				</ee:transform>
+				<logger level="INFO" doc:name="Logger" doc:id="801c3a6a-5bd7-469e-af16-837efe215c83" message='#[payload]'/>
+			</on-error-propagate>
+		</error-handler>
+	
+</flow>
+</mule>

@@ -1,0 +1,144 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule xmlns:sftp="http://www.mulesoft.org/schema/mule/sftp"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:munit="http://www.mulesoft.org/schema/mule/munit"
+	xmlns:munit-tools="http://www.mulesoft.org/schema/mule/munit-tools" xmlns="http://www.mulesoft.org/schema/mule/core"
+	xmlns:doc="http://www.mulesoft.org/schema/mule/documentation" xsi:schemaLocation="
+		http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+		http://www.mulesoft.org/schema/mule/munit http://www.mulesoft.org/schema/mule/munit/current/mule-munit.xsd
+		http://www.mulesoft.org/schema/mule/munit-tools  http://www.mulesoft.org/schema/mule/munit-tools/current/mule-munit-tools.xsd
+http://www.mulesoft.org/schema/mule/sftp http://www.mulesoft.org/schema/mule/sftp/current/mule-sftp.xsd">
+	<munit:config name="Inbound-277-999-suite.xml" />
+	<flow name="mock-sftp:read" doc:id="5c3a8026-ba44-441c-b436-80d2580143af" >
+		<try doc:name="Try" doc:id="7de115a0-eb45-414e-baa9-3e1d55027aa3" >
+			<munit-tools:retrieve doc:name="Retrieve" doc:id="b5ab32ea-f575-4a5b-8e06-b97ab03904f9" key="Mock Reading each file"/>
+			<error-handler >
+				<on-error-continue enableNotifications="false" logException="false" doc:name="On Error Continue" doc:id="8e3a2b44-102f-4208-9e1c-8980757a95ec" type="ANY">
+					<set-payload value="#[1]" doc:name="Set Payload" doc:id="59e589e8-fb34-4490-96be-9dec16413ca0" />
+				</on-error-continue>
+			</error-handler>
+		</try>
+		<munit-tools:store doc:name="Store" doc:id="bc1761dd-628d-4b38-baae-e7bb7c218b1c" key="Mock Reading each file">
+			<munit-tools:value ><![CDATA[#[payload + 1]]]></munit-tools:value>
+		</munit-tools:store>
+		<choice doc:name="Choice" doc:id="ba0d6164-2052-4da2-8abc-7adef37d17d4" >
+			<when expression="#[payload == 1]">
+				<munit:set-event doc:name="Set Event" doc:id="15494b2d-8b87-4797-becc-0974e8b59617" >
+					<munit:payload value="#[output application/octet-stream --- readUrl('classpath://mainFlowtest\mock_payload.dwl')]" encoding="UTF-8" mediaType="application/octet-stream" />
+					<munit:attributes value="#[readUrl('classpath://mainFlowtest\mock_attributes.dwl')]" />
+					<munit:variables >
+						<munit:variable key="rootMessage" value="#[readUrl('classpath://mainFlowtest\mock_variable_.dwl')]" />
+						<munit:variable key="counter" value="#[readUrl('classpath://mainFlowtest\mock_variable_1.dwl')]" />
+					</munit:variables>
+				</munit:set-event>
+			</when>
+			<when expression="#[payload == 2]">
+				<munit:set-event doc:name="Set Event" doc:id="a184aec6-cf8e-4fb2-8c88-642598cd0f2c" >
+					<munit:payload value="#[output application/octet-stream --- readUrl('classpath://mainFlowtest\mock_payload1.dwl')]" encoding="UTF-8" mediaType="application/octet-stream" />
+					<munit:attributes value="#[readUrl('classpath://mainFlowtest\mock_attributes1.dwl')]" />
+					<munit:variables >
+						<munit:variable key="ediData" value="#[output application/json --- readUrl('classpath://mainFlowtest\mock_variable_2.dwl')]" encoding="UTF-8" mediaType="application/json" />
+						<munit:variable key="date" value="#[output application/java --- readUrl('classpath://mainFlowtest\mock_variable_3.dwl')]" encoding="UTF-8" mediaType="application/java" />
+						<munit:variable key="rootMessage" value="#[readUrl('classpath://mainFlowtest\mock_variable_4.dwl')]" />
+						<munit:variable key="apexData" value="#[output application/java --- readUrl('classpath://mainFlowtest\mock_variable_5.dwl')]" encoding="UTF-8" mediaType="application/java" />
+						<munit:variable key="fpath" value="#[output application/java --- readUrl('classpath://mainFlowtest\mock_variable_6.dwl')]" encoding="UTF-8" mediaType="application/java" />
+						<munit:variable key="counter" value="#[readUrl('classpath://mainFlowtest\mock_variable_7.dwl')]" />
+					</munit:variables>
+				</munit:set-event>
+			</when>
+			<otherwise >
+				<munit-tools:fail doc:name="Fail" doc:id="54fb1185-85dd-49d1-bf20-4eeb872595b4" message="There are no more events to mock"/>
+			</otherwise>
+		</choice>
+	</flow>
+	<munit:test name="mainFlow-test" doc:id="6033cd9b-cf91-4981-8c80-88fb650671d6" >
+		<munit:behavior >
+			<munit-tools:mock-when doc:name="Mock Reading each file" doc:id="d8b07994-e6cd-4ee9-b9a3-50e8041ac05b" processor="sftp:read">
+				<munit-tools:with-attributes >
+					<munit-tools:with-attribute whereValue="f9fd3ed2-c084-401c-bd23-cc4d3efb83d6" attributeName="doc:id" />
+				</munit-tools:with-attributes>
+				<munit-tools:then-call flow="mock-sftp:read" />
+			</munit-tools:mock-when>
+			<munit:set-event doc:name="Set Input" doc:id="bdc5b225-cafa-4122-8b68-7efd3aad1558" >
+				<munit:payload value="#[output text/plain --- readUrl('classpath://mainFlowtest\set-event_payload.dwl')]" encoding="UTF-8" mediaType="text/plain" />
+				<munit:attributes value="#[readUrl('classpath://mainFlowtest\set-event_attributes.dwl')]" />
+			</munit:set-event>
+		</munit:behavior>
+		<munit:execution >
+			<flow-ref doc:name="Flow-ref to mainFlow" doc:id="6ef24ebd-57f2-4297-ba9e-a968f292daf5" name="mainFlow"/>
+		</munit:execution>
+		<munit:validation>
+			<munit-tools:assert doc:name="Assert payload" doc:id="bec160f0-750e-40aa-93f8-72d53aba1dbc" message="The payload does not match">
+				<munit-tools:that><![CDATA[#[%dw 2.0
+import mainFlowtest::assert_expression_payload
+---assert_expression_payload::main({payload: payload, attributes: attributes, vars: vars})]]]></munit-tools:that>
+			</munit-tools:assert>
+		</munit:validation>
+	</munit:test>
+	<sub-flow name="Moving-files-from-Archieve" doc:id="4056f371-8046-4b62-a520-cc3a4a32b678">
+		<sftp:list doc:name="List" doc:id="211d2f1d-d6c5-4070-94e0-9ba883181bb9" config-ref="SFTP_Config" directoryPath="Download/Archieve">
+				<sftp:matcher filenamePattern="*.edi" />
+			</sftp:list>
+		<foreach doc:name="For Each" doc:id="8da06370-35a0-426f-a60f-a356148da025">
+			<sftp:move doc:name="Move" doc:id="ec4250a9-4d0a-4806-8712-6a59e7f5dd87" config-ref="SFTP_Config" sourcePath="#[attributes.path]" targetPath="/Download" />
+			</foreach>
+	</sub-flow>
+	<munit:test name="EDI-operations-test-combine" doc:id="63371364-da79-42dc-8d0a-75df7cfaa31c" >
+		<munit:behavior >
+			<flow-ref doc:name="Flow Reference" doc:id="5e66a216-4a02-4983-8088-70c8bcb529a1" name="Moving-files-from-Archieve" />
+			<munit-tools:mock-when doc:name="Mock Moving file to Archieve" doc:id="2eebcf56-eb63-4238-a201-cb9646b9d9de" processor="sftp:move">
+				<munit-tools:with-attributes>
+					<munit-tools:with-attribute whereValue="3e5193d7-c72a-4f76-8206-44bc9488cae6" attributeName="doc:id" />
+				</munit-tools:with-attributes>
+				<munit-tools:then-return>
+					<munit-tools:payload value="#[output application/json --- readUrl('classpath://EDIoperationstestcombine\mock_payload1.dwl')]" mediaType="application/json" encoding="UTF-8" />
+					<munit-tools:variables>
+						<munit-tools:variable key="ediData" value="#[output application/json --- readUrl('classpath://EDIoperationstestcombine\mock_variable_6.dwl')]" mediaType="application/json" encoding="UTF-8" />
+						<munit-tools:variable key="rootMessage" value="#[readUrl('classpath://EDIoperationstestcombine\mock_variable_7.dwl')]" />
+						<munit-tools:variable key="date" value="#[output application/java --- readUrl('classpath://EDIoperationstestcombine\mock_variable_8.dwl')]" mediaType="application/java" encoding="UTF-8" />
+						<munit-tools:variable key="fpath" value="#[output application/java --- readUrl('classpath://EDIoperationstestcombine\mock_variable_9.dwl')]" mediaType="application/java" encoding="UTF-8" />
+						<munit-tools:variable key="counter" value="#[readUrl('classpath://EDIoperationstestcombine\mock_variable_10.dwl')]" />
+					</munit-tools:variables>
+				</munit-tools:then-return>
+			</munit-tools:mock-when>
+			<munit-tools:mock-when doc:name="Mock Invoke apex rest method" doc:id="c9841f67-56bf-41e1-bb73-4ff01b0bddba" processor="salesforce:invoke-apex-rest-method">
+				<munit-tools:with-attributes >
+					<munit-tools:with-attribute whereValue="6d0bc69e-ec5e-4645-80df-6a111c79ba5d" attributeName="doc:id" />
+				</munit-tools:with-attributes>
+				<munit-tools:then-return >
+					<munit-tools:payload value="#[output application/json --- readUrl('classpath://EDIoperationstestcombine\mock_payload.dwl')]" mediaType="application/json" encoding="UTF-8" />
+					<munit-tools:variables >
+						<munit-tools:variable key="ediData" value="#[output application/json --- readUrl('classpath://EDIoperationstestcombine\mock_variable_.dwl')]" mediaType="application/json" encoding="UTF-8" />
+						<munit-tools:variable key="date" value="#[output application/java --- readUrl('classpath://EDIoperationstestcombine\mock_variable_1.dwl')]" mediaType="application/java" encoding="UTF-8" />
+						<munit-tools:variable key="rootMessage" value="#[readUrl('classpath://EDIoperationstestcombine\mock_variable_2.dwl')]" />
+						<munit-tools:variable key="fpath" value="#[output application/java --- readUrl('classpath://EDIoperationstestcombine\mock_variable_3.dwl')]" mediaType="application/java" encoding="UTF-8" />
+						<munit-tools:variable key="apexData" value="#[output application/java --- readUrl('classpath://EDIoperationstestcombine\mock_variable_4.dwl')]" mediaType="application/java" encoding="UTF-8" />
+						<munit-tools:variable key="counter" value="#[readUrl('classpath://EDIoperationstestcombine\mock_variable_5.dwl')]" />
+					</munit-tools:variables>
+				</munit-tools:then-return>
+			</munit-tools:mock-when>
+			<munit:set-event doc:name="Set Input" doc:id="9b427f16-f9b6-49d2-984b-d69911adc5f0" >
+				<munit:payload value="#[output application/json --- readUrl('classpath://EDIoperationstestcombine\set-event_payload.dwl')]" encoding="UTF-8" mediaType="application/json" />
+				<munit:variables >
+					<munit:variable key="rootMessage" value="#[readUrl('classpath://EDIoperationstestcombine\set-event_variable_.dwl')]" />
+					<munit:variable key="date" value="#[output application/java --- readUrl('classpath://EDIoperationstestcombine\set-event_variable_1.dwl')]" encoding="UTF-8" mediaType="application/java" />
+					<munit:variable key="fpath" value="#[output application/java --- readUrl('classpath://EDIoperationstestcombine\set-event_variable_2.dwl')]" encoding="UTF-8" mediaType="application/java" />
+					<munit:variable key="counter" value="#[readUrl('classpath://EDIoperationstestcombine\set-event_variable_3.dwl')]" />
+				</munit:variables>
+			</munit:set-event>
+		</munit:behavior>
+		<munit:execution >
+			<flow-ref doc:name="Flow-ref to EDI-operations" doc:id="b805aeff-36b3-4e5d-a5a7-ffc854d62945" name="EDI-operations"/>
+		</munit:execution>
+		<munit:validation >
+			<munit-tools:assert doc:name="Assert payload" doc:id="dfe2e22a-6f51-4f70-ad6d-7e07c76519ab" message="The payload does not match">
+				<munit-tools:that ><![CDATA[#[%dw 2.0
+import EDIoperationstestcombine::assert_expression_payload
+---
+assert_expression_payload::main({payload: payload, attributes: attributes, vars: vars})]]]></munit-tools:that>
+			</munit-tools:assert>
+		</munit:validation>
+	</munit:test>
+
+
+</mule>

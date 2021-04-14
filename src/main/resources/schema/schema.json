@@ -1,0 +1,410 @@
+{
+  "$schema": "http://json-schema.org/draft-04/schema#",
+  "type": "array",
+  "items": [
+    {
+      "type": "object",
+      "properties": {
+        "Billing_Provider_Taxonomy__c": {
+          "type": "null"
+        },
+        "Patient_City__c": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "Submitter_Contact_Phone__c": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "Filing_Indicator__c": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "Name": {
+          "type": "string"
+        },
+        "Insured_First_Name__c": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "Patient_Sex__c": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "Secondary_Insurance_Relationship__c": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "Secondary_Insured_First_Name__c": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "Patient_Relationship__c": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "Patient_Street_Address__c": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "Patient_Birthdate__c": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "Federal_Tax_ID__c": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "Auto_Accident_State__c": {
+          "type": "null"
+        },
+        "Secondary_Insurance_Name__c": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "Patient_Last_Name__c": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "Total_Charges__c": {
+          "type": "string"
+        },
+        "Billing_Provider_Address__c": {
+          "type": "string"
+        },
+        "Submitter_Contact_Name__c": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "Insured_Street_Address__c": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "Billing_Provider_Zip__c": {
+          "type": "string"
+        },
+        "Patients_Account__c": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "Diagnosis_A__c": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "Submitter_ID__c": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "Insured_City__c": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "Id": {
+          "type": "string"
+        },
+        "Date_of_Current_Illness__c": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "Billing_Provider_NPI__c": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "Billing_Provider_Name__c": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "Physician_Supplier_Signature__c": {
+          "type": "null"
+        },
+        "Insured_Birthdate__c": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "Secondary_Policy_Group_Number__c": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "Diagnosis_B__c": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "Claim_Lines__r": {
+          "type": [
+            "array",
+            "null"
+          ],
+          "items": [
+            {
+              "type": "object",
+              "properties": {
+                "Date_of_Service_From__c": {
+                  "type": "null",
+                  "type":"string"
+                },
+                "Charges__c": {
+                  "type": "string"
+                },
+                "Procedure_Code__c": {
+                  "type": ["string","null"]
+                },
+                "type": {
+                  "type": "string"
+                },
+                "Diagnosis_Pointer__c": {
+                  "type": "string"
+                },
+                "ID_Qualifier__c": {
+                  "type": "string"
+                },
+                "Rendering_Provider_ID__c": {
+                  "type": "string"
+                },
+                "Name": {
+                  "type": "string"
+                },
+                "Days_Units__c": {
+                  "type": "string"
+                },
+                "Procedure_Modifier__c": {
+                  "type": "string"
+                },
+                "Id": {
+                  "type": "string"
+                },
+                "Emergency_Indicator__c": {
+                  "type": "string"
+                },
+                "Procedure_Modifier__c":{
+                "type":["null","string"]
+              		},
+                "Claim_Number__c": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "Date_of_Service_From__c",
+                "Charges__c",
+                "Procedure_Code__c",
+                "type",
+                "Diagnosis_Pointer__c",
+                "ID_Qualifier__c",
+                "Rendering_Provider_ID__c",
+                "Name",
+                "Days_Units__c",
+                "Procedure_Modifier__c",
+                "Id",
+                "Emergency_Indicator__c",
+                "Claim_Number__c"
+              ]
+            }
+          ]
+        },
+        "Secondary_Insured_Last_Name__c": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "Accept_Assignment__c": {
+          "type": "string"
+        },
+        "Patient_Zipcode__c": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "Billing_Provider_City__c": {
+          "type": "string"
+        },
+        "Insured_Last_Name__c": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "Prior_Authorization_Number__c": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "Patient_State__c": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "Patient_First_Name__c": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "Insured_Middle_Name__c": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "Insurance_Plan_Name__c": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "Insured_ID_Number__c": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "Payer_Claim_Number__c": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "Related_Cause__c": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "Diagnosis_C__c": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "Insured_Policy_Group_Number__c": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "Insured_State__c": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "Patient_Address_2__c": {
+          "type": "null"
+        },
+        "Insured_Zip__c": {
+          "type": [
+            "string",
+            "null"
+          ]
+        }
+      },
+      "required": [
+        "Billing_Provider_Taxonomy__c",
+        "Patient_City__c",
+        "Submitter_Contact_Phone__c",
+        "Filing_Indicator__c",
+        "type",
+        "Name",
+        "Insured_First_Name__c",
+        "Patient_Sex__c",
+        "Secondary_Insurance_Relationship__c",
+        "Secondary_Insured_First_Name__c",
+        "Patient_Relationship__c",
+        "Patient_Street_Address__c",
+        "Patient_Birthdate__c",
+        "Federal_Tax_ID__c",
+        "Auto_Accident_State__c",
+        "Secondary_Insurance_Name__c",
+        "Patient_Last_Name__c",
+        "Total_Charges__c",
+        "Billing_Provider_Address__c",
+        "Submitter_Contact_Name__c",
+        "Insured_Street_Address__c",
+        "Billing_Provider_Zip__c",
+        "Patients_Account__c",
+        "Diagnosis_A__c",
+        "Submitter_ID__c",
+        "Insured_City__c",
+        "Id",
+        "Date_of_Current_Illness__c",
+        "Billing_Provider_NPI__c",
+        "Billing_Provider_Name__c",
+        "Physician_Supplier_Signature__c",
+        "Insured_Birthdate__c",
+        "Secondary_Policy_Group_Number__c",
+        "Diagnosis_B__c",
+        "Claim_Lines__r",
+        "Secondary_Insured_Last_Name__c",
+        "Accept_Assignment__c",
+        "Patient_Zipcode__c",
+        "Billing_Provider_City__c",
+        "Insured_Last_Name__c",
+        "Prior_Authorization_Number__c",
+        "Patient_State__c",
+        "Patient_First_Name__c",
+        "Insured_Middle_Name__c",
+        "Insurance_Plan_Name__c",
+        "Insured_ID_Number__c",
+        "Payer_Claim_Number__c",
+        "Related_Cause__c",
+        "Diagnosis_C__c",
+        "Insured_Policy_Group_Number__c",
+        "Insured_State__c",
+        "Patient_Address_2__c",
+        "Insured_Zip__c"
+      ]
+    }
+  ]
+}
